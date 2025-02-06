@@ -1,0 +1,25 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 메인 리조트 건물 -->
+  <path d="M60 160 L60 90 L100 70 L140 90 L140 160" 
+        fill="#2563eb" 
+        stroke="#1e40af" 
+        stroke-width="3"/>
+  
+  <!-- 출입구 -->
+  <path d="M90 160 L90 140 Q100 135 110 140 L110 160" 
+        fill="#bfdbfe"/>
+        
+  <!-- 야자수 1 -->
+  <rect x="28" y="120" width="4" height="30" fill="#854d0e"/>
+  <path d="M30 130 C20 120 25 110 30 105 C35 110 40 120 30 130" 
+        fill="#15803d"/>
+  
+  <!-- 야자수 2 -->
+  <rect x="168" y="120" width="4" height="30" fill="#854d0e"/>
+  <path d="M170 130 C160 120 165 110 170 105 C175 110 180 120 170 130" 
+        fill="#15803d"/>
+  
+  <!-- 코인 -->
+  <circle cx="100" cy="90" r="25" fill="#fbbf24" stroke="#b45309" stroke-width="4"/>
+  
+</svg>
