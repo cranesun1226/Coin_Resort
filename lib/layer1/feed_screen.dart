@@ -1,13 +1,18 @@
 // import packages
+import 'package:cr_frontend/layer4/feeddetail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cr_frontend/etc/feeddata_type.dart';
 // import files
 
 class FeedScreen extends StatefulWidget {
   final String code;
+  final Feed? feed;
 
   const FeedScreen({
     super.key,
     required this.code,
+    this.feed,
   });
 
   @override
@@ -15,6 +20,8 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
+  final supabase = Supabase.instance.client;
+  late String _selectedTicker;
   final List<String> _tickers = [
     'KRW-BTC',
     'KRW-ETH',
@@ -27,12 +34,23 @@ class _FeedScreenState extends State<FeedScreen> {
     'KRW-LINK',
   ];
 
-  late String _selectedTicker;
-
   @override
   void initState() {
     super.initState();
     _selectedTicker = widget.code;
+  }
+
+  Future<List<Feed>> _getFeeds(String ticker) async {
+    final response = await supabase
+        .from('${ticker.split('-')[1].toLowerCase()}_feed')
+        .select('''
+          *,
+          profiles (
+            username
+          )
+        ''').order('created_at', ascending: false);
+
+    return (response as List).map((feed) => Feed.fromMap(feed)).toList();
   }
 
   @override
@@ -108,43 +126,122 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
           Expanded(
-            child: Center(
-              child: Container(
-                padding: EdgeInsets.all(20),
-                margin: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFF2EC4B6).withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Selected Ticker",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
+            child: FutureBuilder<List<Feed>>(
+              future: _getFeeds(_selectedTicker),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                final feeds = snapshot.data!;
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: feeds.length,
+                  itemBuilder: (context, index) {
+                    final feed = feeds[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FeedDetailScreen(feed: feed),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF2EC4B6).withOpacity(0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: const Color(0xFF2EC4B6)
+                                        .withOpacity(0.1),
+                                    child: Text(
+                                      feed.userName[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Color(0xFF2EC4B6),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        feed.userName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        feed.createdAt
+                                            .toString()
+                                            .substring(0, 16),
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                feed.title,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '진입가: ${feed.entryPrice}',
+                                    style: const TextStyle(
+                                        color: Color(0xFF2EC4B6)),
+                                  ),
+                                  Text(
+                                    '목표가: ${feed.targetPrice}',
+                                    style: const TextStyle(
+                                        color: Color(0xFF2EC4B6)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      _selectedTicker,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2EC4B6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],

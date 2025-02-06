@@ -39,6 +39,7 @@ dependencies:
   flutter_svg: ^2.0.17
   intl: ^0.20.2
   provider: ^6.1.2
+  shimmer: ^3.0.0
   # Supabase
   supabase_flutter: ^2.8.3
   google_sign_in: ^6.2.2
@@ -74,6 +75,11 @@ flutter:
     - asset/coin_resort_logo_simple.png
     - asset/google_logo.png
     - asset/coin_resort_logo.svg
+    - asset/btc_logo.png
+    - asset/eth_logo.png
+    - asset/xrp_logo.png
+    - asset/sol_logo.png
+    - asset/doge_logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

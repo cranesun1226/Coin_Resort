@@ -33,8 +33,6 @@ migrate_working_dir/
 .pub/
 /build/
 .env
-/android/
-/ios/
 pubspec.lock
 analysis_options.yaml
 .metadata

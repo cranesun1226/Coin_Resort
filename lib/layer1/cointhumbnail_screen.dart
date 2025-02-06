@@ -23,11 +23,7 @@ class CoinThumbnailScreenState extends State<CoinThumbnailScreen> {
     'KRW-ETH',
     'KRW-XRP',
     'KRW-DOGE',
-    'KRW-ONDO',
     'KRW-SOL',
-    'KRW-ADA',
-    'KRW-SUI',
-    'KRW-LINK',
   ];
 
   @override
@@ -161,14 +157,20 @@ class CryptoThumbnailWidgetState extends State<CryptoThumbnailWidget> {
 
   @override
   Widget build(BuildContext context) {
-    String getCoinEmoji(String code) {
+    String getCoinImage(String code) {
       switch (code) {
         case 'KRW-BTC':
-          return '₿';
+          return 'asset/btc_logo.png';
         case 'KRW-ETH':
-          return '⟠';
+          return 'asset/eth_logo.png';
+        case 'KRW-XRP':
+          return 'asset/xrp_logo.png';
+        case 'KRW-DOGE':
+          return 'asset/doge_logo.png';
+        case 'KRW-SOL':
+          return 'asset/sol_logo.png';
         default:
-          return '🏖️';
+          return 'asset/btc_logo.png';
       }
     }
 
@@ -185,8 +187,6 @@ class CryptoThumbnailWidgetState extends State<CryptoThumbnailWidget> {
           return '도지코인';
         case 'SOL':
           return '솔라나';
-        case 'ADA':
-          return '에이다';
         default:
           return coinCode;
       }
@@ -247,14 +247,23 @@ class CryptoThumbnailWidgetState extends State<CryptoThumbnailWidget> {
                         Row(
                           children: [
                             Container(
-                              padding: EdgeInsets.all(8),
+                              width: 24,
+                              height: 24,
                               decoration: BoxDecoration(
-                                color: Color(0xFF2EC4B6).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  width: 1,
+                                ),
                               ),
-                              child: Text(
-                                getCoinEmoji(widget.code),
-                                style: TextStyle(fontSize: 20),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.asset(
+                                  getCoinImage(widget.code),
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
                             SizedBox(width: 12),
