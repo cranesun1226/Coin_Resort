@@ -118,44 +118,39 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                backgroundColor: Color(0xFF2EC4B6).withOpacity(0.1),
-                child: Text(
-                  widget.code.split('-')[1],
-                  style: TextStyle(
-                    color: Color(0xFF2EC4B6),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+        centerTitle: true,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2EC4B6).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
               ),
-              SizedBox(width: 12),
-              Text(
-                '실시간 종목 토론방',
-                style: TextStyle(
-                  color: Colors.black87,
+              child: Text(
+                widget.code.split('-')[1],
+                style: const TextStyle(
+                  color: Color(0xFF2EC4B6),
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              '실시간 종목 토론방',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Color(0xFF2EC4B6)),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2EC4B6)),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.info_outline, color: Color(0xFF2EC4B6)),
-            onPressed: () {
-              // 채팅방 정보 표시
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [

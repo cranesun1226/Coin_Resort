@@ -1,5 +1,6 @@
 // import packages
 import 'package:cr_frontend/layer4/feeddetail_screen.dart';
+import 'package:cr_frontend/layer4/feedmake_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cr_frontend/etc/feeddata_type.dart';
@@ -27,11 +28,7 @@ class _FeedScreenState extends State<FeedScreen> {
     'KRW-ETH',
     'KRW-XRP',
     'KRW-DOGE',
-    'KRW-ONDO',
     'KRW-SOL',
-    'KRW-ADA',
-    'KRW-SUI',
-    'KRW-LINK',
   ];
 
   @override
@@ -73,55 +70,72 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              padding: EdgeInsets.fromLTRB(8, 16, 8, 16),
               child: Row(
-                children: _tickers.map((ticker) {
-                  bool isSelected = ticker == _selectedTicker;
-                  return Padding(
-                    padding: EdgeInsets.only(right: 12),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedTicker = ticker;
-                        });
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Color(0xFF2EC4B6)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CreateFeedScreen(code: widget.code),
                         ),
-                        decoration: BoxDecoration(
-                          gradient: isSelected
-                              ? LinearGradient(
-                                  colors: [
-                                    Color(0xFF2EC4B6),
-                                    Color(0xFFFF7F50)
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
-                              : null,
-                          color: isSelected ? null : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected
-                                ? Colors.transparent
-                                : Color(0xFF2EC4B6).withOpacity(0.3),
-                            width: 1,
+                      );
+                    },
+                  ),
+                  Row(
+                    children: _tickers.map((ticker) {
+                      bool isSelected = ticker == _selectedTicker;
+                      return Padding(
+                        padding: EdgeInsets.only(right: 12),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedTicker = ticker;
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: isSelected
+                                  ? LinearGradient(
+                                      colors: [
+                                        Color(0xFF2EC4B6),
+                                        Color(0xFFFF7F50)
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              color: isSelected ? null : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.transparent
+                                    : Color(0xFF2EC4B6).withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              ticker.split('-')[1],
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : Color(0xFF2EC4B6),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
-                        child: Text(
-                          ticker.split('-')[1],
-                          style: TextStyle(
-                            color:
-                                isSelected ? Colors.white : Color(0xFF2EC4B6),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
             ),
           ),
@@ -243,7 +257,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 );
               },
             ),
-          ),
+          )
         ],
       ),
     );

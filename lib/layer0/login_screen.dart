@@ -37,34 +37,31 @@ class _CoinResortLoginScreenState extends State<CoinResortLoginScreen>
   }
 
   Future<void> _nativeGoogleSignIn() async {
+    if (!mounted) return;
+
     try {
-      await dotenv.load(
-          fileName:
-              "/Users/haksunlee/CraneSunCompany/CoinResort/cr_frontend/.env");
+      await dotenv.load(fileName: ".env");
+      final webClientId = dotenv.env['WEBCLIENT_ID'];
+      final iosClientId = dotenv.env['IOSCLIENT_ID'];
 
-      String webClientId = dotenv.env['WEBCLIENT_ID']!;
-      String iosClientId = dotenv.env['IOSCLIENT_ID']!;
-
-      final GoogleSignIn googleSignIn =
-          GoogleSignIn(clientId: iosClientId, serverClientId: webClientId);
-
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        throw 'Google Sign-In cancelled.';
+      if (webClientId == null || iosClientId == null) {
+        throw '클라이언트 ID가 설정되지 않았습니다.';
       }
 
-      if (!mounted) return;
+      final googleUser = await GoogleSignIn(
+        clientId: iosClientId,
+        serverClientId: webClientId,
+      ).signIn();
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      if (googleUser == null) throw '구글 로그인이 취소되었습니다.';
+
+      final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
       final accessToken = googleAuth.accessToken;
 
       if (idToken == null || accessToken == null) {
-        throw 'Failed to obtain Google auth tokens.';
+        throw '구글 인증 토큰을 가져오는데 실패했습니다.';
       }
-
-      if (!mounted) return;
 
       final response = await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
@@ -72,26 +69,21 @@ class _CoinResortLoginScreenState extends State<CoinResortLoginScreen>
         accessToken: accessToken,
       );
 
-      final userId = response.user?.id;
-      if (userId != null) {
-        final profileResponse = await Supabase.instance.client
-            .from('profiles')
-            .select()
-            .eq('id', userId)
-            .single();
-
-        if (profileResponse.isEmpty) {
+      if (response.user?.id != null) {
+        try {
           Navigator.pushReplacementNamed(context, '/home');
-        } else {
+        } catch (_) {
           Navigator.pushReplacementNamed(context, '/signup');
         }
       }
-    } on AuthException catch (error) {
-      context.showErrorSnackBar(message: error.message);
-    } on Exception catch (error) {
+    } catch (error) {
+      if (!mounted) return;
       context.showErrorSnackBar(
-          message: 'An unexpected error occurred: $error');
-      debugPrintStack(label: 'Sign-in Error', stackTrace: StackTrace.current);
+        message: error is AuthException
+            ? '인증 오류: ${error.message}'
+            : '오류가 발생했습니다: $error',
+      );
+      debugPrint('로그인 오류: $error');
     }
   }
 

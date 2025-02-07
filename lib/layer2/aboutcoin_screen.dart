@@ -123,39 +123,30 @@ class _AboutCoinScreenState extends State<AboutCoinScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          padding: EdgeInsets.only(left: 16),
           icon: Icon(Icons.arrow_back_ios, color: Color(0xFF2EC4B6)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF2EC4B6), Color(0xFFFF7F50)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${widget.code.split('-')[1]} 라운지 🌴',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18,
-                ),
-              ),
+        centerTitle: true,
+        title: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF2EC4B6), Color(0xFFFF7F50)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.share_outlined, color: Color(0xFF2EC4B6)),
-            onPressed: () {},
+            borderRadius: BorderRadius.circular(20),
           ),
-        ],
+          child: Text(
+            '${widget.code.split('-')[1]} 라운지 🌴',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(

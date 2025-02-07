@@ -18,7 +18,19 @@ class PriceInfoCard extends StatefulWidget {
 }
 
 class _PriceInfoCardState extends State<PriceInfoCard> {
-  bool isExpanded = false;
+  bool isExpanded = true;
+  final TextEditingController _priceController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _priceController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,48 +102,7 @@ class _PriceInfoCardState extends State<PriceInfoCard> {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      isExpanded ? Icons.remove : Icons.add,
-                      color: Colors.grey[600],
-                      size: 22,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        isExpanded = !isExpanded;
-                      });
-                    },
-                  ),
                 ],
-              ),
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Color(0xFF2EC4B6).withOpacity(0.2),
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.notifications_none_rounded,
-                      color: Color(0xFF2EC4B6),
-                      size: 20,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      '알림설정',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF2EC4B6),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),

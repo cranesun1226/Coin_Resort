@@ -1,11 +1,14 @@
 // import packages
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:http/http.dart' as http;
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 // import files
 import 'package:cr_frontend/layer2/aboutcoin_screen.dart';
 import 'package:cr_frontend/etc/chartdata_type.dart';
@@ -32,18 +35,6 @@ class CoinThumbnailScreenState extends State<CoinThumbnailScreen> {
       backgroundColor: Color(0xFFF5F9FF), // 하늘빛이 도는 배경색
       body: Column(
         children: [
-          Container(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              "인기 코인 🌴",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2EC4B6),
-                letterSpacing: -0.5,
-              ),
-            ),
-          ),
           Expanded(
             child: ListView.builder(
               padding: EdgeInsets.symmetric(horizontal: 16),
@@ -81,6 +72,10 @@ class CryptoThumbnailWidgetState extends State<CryptoThumbnailWidget> {
   List<ChartData> chartData = [];
   late int currentInterval;
   bool showIntervalMenu = false;
+  late WebSocketChannel _channel;
+  late StreamSubscription _channelSubscription;
+  int _reconnectAttempts = 0;
+  static const int maxReconnectDelay = 300; // 최대 5분
 
   final List<Map<String, dynamic>> intervalOptions = [
     {'label': '1분봉', 'value': 1, 'endpoint': 'minutes/1'},
@@ -95,6 +90,132 @@ class CryptoThumbnailWidgetState extends State<CryptoThumbnailWidget> {
     super.initState();
     currentInterval = widget.interval;
     fetchChartData();
+    _connectWebSocket();
+  }
+
+  void _connectWebSocket() {
+    _reconnectAttempts = 0; // 연결 성공시 재시도 카운트 리셋
+    _channel = IOWebSocketChannel.connect("wss://api.upbit.com/websocket/v1");
+
+    _channel.sink.add(jsonEncode([
+      {"ticket": "test"},
+      {
+        "type": "ticker",
+        "codes": [widget.code]
+      }
+    ]));
+
+    _channelSubscription = _channel.stream.listen(
+      (message) {
+        final decoded = utf8.decode(message);
+        final data = jsonDecode(decoded);
+        _updateChartData(data);
+      },
+      onError: (error) {
+        if (kDebugMode) {
+          print("WebSocket Error: $error");
+        }
+        _reconnectWebSocket();
+      },
+      onDone: () {
+        if (kDebugMode) {
+          print("WebSocket Closed");
+        }
+        _reconnectWebSocket();
+      },
+    );
+  }
+
+  void _reconnectWebSocket() {
+    if (!mounted) return;
+
+    // 재시도 간격을 2의 제곱으로 증가 (5초, 10초, 20초...)
+    int delaySeconds =
+        min(5 * pow(2, _reconnectAttempts).toInt(), maxReconnectDelay);
+
+    Future.delayed(Duration(seconds: delaySeconds), () {
+      if (mounted) {
+        _connectWebSocket();
+        _reconnectAttempts++;
+      }
+    });
+  }
+
+  void _updateChartData(Map<String, dynamic> data) {
+    if (!mounted) return;
+
+    try {
+      final now = DateTime.fromMillisecondsSinceEpoch(data['timestamp']);
+      final tradePrice = (data['trade_price'] is int)
+          ? data['trade_price'].toDouble()
+          : data['trade_price'];
+
+      setState(() {
+        if (chartData.isEmpty) return;
+
+        var latestCandle = chartData[0];
+
+        if (_isSameInterval(latestCandle.time, now)) {
+          chartData[0] = ChartData(
+            time: latestCandle.time,
+            open: latestCandle.open,
+            high: max(latestCandle.high, tradePrice),
+            low: min(latestCandle.low, tradePrice),
+            close: tradePrice,
+          );
+        } else {
+          final newCandle = ChartData(
+            time: _normalizeDateTime(now),
+            open: tradePrice,
+            high: tradePrice,
+            low: tradePrice,
+            close: tradePrice,
+          );
+          chartData.insert(0, newCandle);
+
+          if (chartData.length > 100) {
+            chartData.removeLast();
+          }
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating chart data: $e');
+      }
+    }
+  }
+
+  DateTime _normalizeDateTime(DateTime time) {
+    if (currentInterval >= 1440) {
+      return DateTime(time.year, time.month, time.day);
+    } else {
+      final totalMinutes = time.hour * 60 + time.minute;
+      final normalizedMinutes =
+          (totalMinutes ~/ currentInterval) * currentInterval;
+      final hours = normalizedMinutes ~/ 60;
+      final minutes = normalizedMinutes % 60;
+      return DateTime(time.year, time.month, time.day, hours, minutes);
+    }
+  }
+
+  bool _isSameInterval(DateTime existing, DateTime now) {
+    if (currentInterval >= 1440) {
+      return existing.year == now.year &&
+          existing.month == now.month &&
+          existing.day == now.day;
+    } else {
+      final existingMinutes = existing.hour * 60 + existing.minute;
+      final newMinutes = now.hour * 60 + now.minute;
+      return (existingMinutes ~/ currentInterval) ==
+          (newMinutes ~/ currentInterval);
+    }
+  }
+
+  @override
+  void dispose() {
+    _channelSubscription.cancel();
+    _channel.sink.close();
+    super.dispose();
   }
 
   String getIntervalLabel(int interval) {
@@ -205,7 +326,7 @@ class CryptoThumbnailWidgetState extends State<CryptoThumbnailWidget> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.fromLTRB(0, 16, 0, 0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -291,15 +412,6 @@ class CryptoThumbnailWidgetState extends State<CryptoThumbnailWidget> {
                         ),
                         Row(
                           children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.star_border_rounded,
-                                color: Color(0xFFFF7F50),
-                              ),
-                              onPressed: () {
-                                // 즐겨찾기 기능
-                              },
-                            ),
                             GestureDetector(
                               onTap: () {
                                 setState(() {
@@ -346,6 +458,13 @@ class CryptoThumbnailWidgetState extends State<CryptoThumbnailWidget> {
                               ),
                             )
                           : SfCartesianChart(
+                              zoomPanBehavior: ZoomPanBehavior(
+                                enablePinching: true,
+                                enablePanning: true,
+                                enableDoubleTapZooming: true,
+                                enableMouseWheelZooming: true,
+                                zoomMode: ZoomMode.x,
+                              ),
                               plotAreaBorderWidth: 0,
                               margin: const EdgeInsets.all(0),
                               primaryXAxis: DateTimeAxis(

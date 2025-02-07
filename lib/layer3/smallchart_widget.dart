@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
-
+import 'dart:math';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:cr_frontend/etc/chartdata_type.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +27,8 @@ class SmallChartWidget extends StatefulWidget {
 class SmallChartWidgetState extends State<SmallChartWidget> {
   List<ChartData> chartData = [];
   late int currentInterval;
+  late WebSocketChannel _channel;
+  late StreamSubscription _channelSubscription;
 
   final List<Map<String, dynamic>> intervalOptions = [
     {'label': '1분봉', 'value': 1, 'endpoint': 'minutes/1'},
@@ -38,6 +43,124 @@ class SmallChartWidgetState extends State<SmallChartWidget> {
     super.initState();
     currentInterval = widget.interval;
     fetchChartData();
+    _connectWebSocket();
+  }
+
+  void _connectWebSocket() {
+    _channel = IOWebSocketChannel.connect("wss://api.upbit.com/websocket/v1");
+
+    _channel.sink.add(jsonEncode([
+      {"ticket": "test"},
+      {
+        "type": "ticker",
+        "codes": [widget.code]
+      }
+    ]));
+
+    _channelSubscription = _channel.stream.listen(
+      (message) {
+        final decoded = utf8.decode(message);
+        final data = jsonDecode(decoded);
+        _updateChartData(data);
+      },
+      onError: (error) {
+        if (kDebugMode) {
+          print("WebSocket Error: $error");
+        }
+        _reconnectWebSocket();
+      },
+      onDone: () {
+        if (kDebugMode) {
+          print("WebSocket Closed");
+        }
+        _reconnectWebSocket();
+      },
+    );
+  }
+
+  void _reconnectWebSocket() {
+    Future.delayed(Duration(seconds: 5), () {
+      if (mounted) {
+        _connectWebSocket();
+      }
+    });
+  }
+
+  void _updateChartData(Map<String, dynamic> data) {
+    if (!mounted) return;
+
+    try {
+      final now = DateTime.fromMillisecondsSinceEpoch(data['timestamp']);
+      final tradePrice = (data['trade_price'] is int)
+          ? data['trade_price'].toDouble()
+          : data['trade_price'];
+
+      setState(() {
+        if (chartData.isEmpty) return;
+
+        var latestCandle = chartData[0];
+
+        if (_isSameInterval(latestCandle.time, now)) {
+          chartData[0] = ChartData(
+            time: latestCandle.time,
+            open: latestCandle.open,
+            high: max(latestCandle.high, tradePrice),
+            low: min(latestCandle.low, tradePrice),
+            close: tradePrice,
+          );
+        } else {
+          final newCandle = ChartData(
+            time: _normalizeDateTime(now),
+            open: tradePrice,
+            high: tradePrice,
+            low: tradePrice,
+            close: tradePrice,
+          );
+          chartData.insert(0, newCandle);
+
+          if (chartData.length > 100) {
+            chartData.removeLast();
+          }
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating chart data: $e');
+      }
+    }
+  }
+
+  DateTime _normalizeDateTime(DateTime time) {
+    if (currentInterval >= 1440) {
+      return DateTime(time.year, time.month, time.day);
+    } else {
+      final totalMinutes = time.hour * 60 + time.minute;
+      final normalizedMinutes =
+          (totalMinutes ~/ currentInterval) * currentInterval;
+      final hours = normalizedMinutes ~/ 60;
+      final minutes = normalizedMinutes % 60;
+      return DateTime(time.year, time.month, time.day, hours, minutes);
+    }
+  }
+
+  bool _isSameInterval(DateTime existing, DateTime now) {
+    if (currentInterval >= 1440) {
+      return existing.year == now.year &&
+          existing.month == now.month &&
+          existing.day == now.day;
+    } else {
+      final existingMinutes = existing.hour * 60 + existing.minute;
+      final newMinutes = now.hour * 60 + now.minute;
+      return (existingMinutes ~/ currentInterval) ==
+          (newMinutes ~/ currentInterval);
+    }
+  }
+
+  @override
+  void dispose() {
+    _channelSubscription.cancel();
+    _channel.sink.close();
+    super.dispose();
   }
 
   String getIntervalLabel(int interval) {
@@ -190,11 +313,19 @@ class SmallChartWidgetState extends State<SmallChartWidget> {
                         : SfCartesianChart(
                             plotAreaBorderWidth: 0,
                             margin: const EdgeInsets.all(0),
+                            zoomPanBehavior: ZoomPanBehavior(
+                              enablePinching: true,
+                              enablePanning: true,
+                              enableDoubleTapZooming: true,
+                              enableMouseWheelZooming: true,
+                              zoomMode: ZoomMode.xy,
+                            ),
                             primaryXAxis: DateTimeAxis(
                               majorGridLines: const MajorGridLines(width: 0),
                               axisLine: const AxisLine(width: 0),
                               labelStyle: TextStyle(color: Colors.transparent),
                               majorTickLines: const MajorTickLines(size: 0),
+                              enableAutoIntervalOnZooming: true,
                             ),
                             primaryYAxis: NumericAxis(
                               isVisible: true,
