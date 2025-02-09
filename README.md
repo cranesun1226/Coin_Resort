@@ -46,9 +46,6 @@ INTRODUCE=""
 ## 🔗 링크
 - 공식 웹사이트: [cranesun.co.kr](https://www.cranesun.co.kr)
 
-## 📜 라이선스
-이 프로젝트는 [MIT License](LICENSE)를 따릅니다.
-
 ---
 
 > **🚀 Coin Resort와 함께 암호화폐 시장을 경험하세요!**
