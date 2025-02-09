@@ -2,8 +2,6 @@
 > 🚀 실시간 암호화폐 차트 & 커뮤니티 앱
 
 ![GitHub stars](https://img.shields.io/github/stars/your-repo?style=for-the-badge)
-![GitHub forks](https://img.shields.io/github/forks/your-repo?style=for-the-badge)
-![GitHub license](https://img.shields.io/github/license/your-repo?style=for-the-badge)
 
 ## 📖 소개
 **Coin Resort**는 실시간 암호화폐 차트와 사용자 간 커뮤니티 기능을 제공하는 앱입니다.
