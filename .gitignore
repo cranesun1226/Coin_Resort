@@ -36,7 +36,7 @@ migrate_working_dir/
 pubspec.lock
 analysis_options.yaml
 .metadata
-
+/asset/
 
 # Symbolication related
 app.*.symbols

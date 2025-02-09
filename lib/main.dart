@@ -26,6 +26,7 @@ class CoinResortApp extends StatelessWidget {
     final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Coin Resort',
       theme: ThemeData(
         colorScheme: ColorScheme.light(
